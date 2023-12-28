@@ -146,6 +146,13 @@ public struct WithCompositeIDMacro: MemberMacro {
         var allProperties: [String: FluentAttributeInfo] = [:]
         var compositeMembers: [CompositeProperty] = []
         var remainingMembers: [MemberBlockItemSyntax] = []
+        var remainingVariables: [VariableDeclSyntax] {
+            remainingMembers.compactMap {
+                $0.decl.as(VariableDeclSyntax.self)
+            }.filter {
+                !$0.modifiers.contains(.init(name: "static")) && $0.bindings.first?.pattern.trimmedDescription != "schema"
+            }
+        }
         
         var member = inner.memberBlock.members.makeIterator()
         while let member = member.next() {
@@ -170,16 +177,28 @@ public struct WithCompositeIDMacro: MemberMacro {
                 
                 for binding in variable.bindings {
                     var variable = variable
-                    
+                 
+                    variable.bindingSpecifier.leadingTrivia = ""
+                    variable.bindingSpecifier.trailingTrivia = ""
                     variable.leadingTrivia = ""
                     variable.trailingTrivia = ""
-                    variable.bindingSpecifier.leadingTrivia = "\n"
+                    variable.modifiers.leadingTrivia = ""
+                    variable.modifiers.trailingTrivia = ""
+                    for i in variable.modifiers.indices {
+                        variable.modifiers[i].leadingTrivia = ""
+                        variable.modifiers[i].trailingTrivia = ""
+                    }
+                    variable.bindingSpecifier.leadingTrivia = ""
                     variable.bindingSpecifier.trailingTrivia = ""
+                    variable.bindings.leadingTrivia = ""
+                    variable.bindings.trailingTrivia = ""
                     variable.bindings = [variable.bindings.last!]
                     variable.bindings[variable.bindings.startIndex].leadingTrivia = ""
                     variable.bindings[variable.bindings.startIndex].trailingTrivia = ""
                     variable.bindings[variable.bindings.startIndex].pattern = binding.pattern
-                    
+                    variable.bindings[variable.bindings.startIndex].pattern.leadingTrivia = ""
+                    variable.bindings[variable.bindings.startIndex].pattern.trailingTrivia = ""
+
                     if compositeProperties.contains(binding.pattern.trimmedDescription) {
                         compositeMembers.append(.init(
                             fluentAttribute: (
@@ -256,7 +275,7 @@ public struct WithCompositeIDMacro: MemberMacro {
                     }.joined().joined(separator: ", ")))
                     """
                 ))])
-            )),]))
+            ))]))
         )
         
         inner.memberBlock.members = .init([.init(decl: idValue)])
@@ -274,7 +293,38 @@ public struct WithCompositeIDMacro: MemberMacro {
             return .init(decl: variable.as(DeclSyntax.self)!)
         })
         
-        return [inner.as(DeclSyntax.self)!]
+        inner.memberBlock.members.append( .init(decl: try VariableDeclSyntax("""
+            var flat: \(declaration.name) {
+                let flat = \(declaration.name)()
+                if let id = self.id {
+                \(raw: compositeMembers.map {
+                    "    flat.\($0.variable.bindings.first!.pattern) = id.\($0.fluentAttribute.info.convert($0.variable).bindings.first!.pattern)"
+                }.joined(separator: "\n    "))
+                }
+                \(raw: remainingVariables.map {
+                    "flat.\($0.bindings.first!.pattern) = self.\($0.bindings.first!.pattern)"
+                }.joined(separator: "\n"))
+                return flat
+            }
+            """
+        )))
+
+        return [
+            inner.as(DeclSyntax.self)!,
+            """
+            var composite: Composite {
+                let composite = Composite()
+                composite.id = Composite.IDValue()
+                \(raw: compositeMembers.map {
+                    "composite.id!.\($0.fluentAttribute.info.convert($0.variable).bindings.first!.pattern) = self.\($0.variable.bindings.first!.pattern)"
+                }.joined(separator: "\n"))
+                \(raw: remainingVariables.map {
+                    "composite.\($0.bindings.first!.pattern) = self.\($0.bindings.first!.pattern)"
+                }.joined(separator: "\n"))
+                return composite
+            }
+            """,
+        ]
     }
         
 }

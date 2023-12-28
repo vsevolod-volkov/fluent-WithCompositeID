@@ -38,10 +38,8 @@ final class WithCompositeIDTests: XCTestCase {
 
                 final class Composite: Model {
                     final class IDValue: Fields , Hashable {
-                        @Parent(key: "customer_id")
-                        var customer: Customer
-                        @Field(key: "id")
-                        var id: Int?
+                        @Parent(key: "customer_id") var customer: Customer
+                        @Field(key: "id") var id: Int?
                         func hash(into hasher: inout Hasher) {
                             hasher.combine(try! self.customer.requireID())
                             hasher.combine(self.id)
@@ -53,6 +51,24 @@ final class WithCompositeIDTests: XCTestCase {
                     @CompositeID()
                     var id: IDValue?
                     var prop: String
+                    var flat: MyEntity {
+                        let flat = MyEntity()
+                        if let id = self.id {
+                            flat.customer = id.customer
+                            flat.id = id.id
+                        }
+                        flat.prop = self.prop
+                        return flat
+                    }
+                }
+
+                var composite: Composite {
+                    let composite = Composite()
+                    composite.id = Composite.IDValue()
+                    composite.id!.customer = self.customer
+                    composite.id!.id = self.id
+                    composite.prop = self.prop
+                    return composite
                 }
             }
             """,
@@ -89,10 +105,8 @@ final class WithCompositeIDTests: XCTestCase {
 
                 final class Composite: Model {
                     final class IDValue: Fields , Hashable {
-                        @Parent(key: "customer_id")
-                        var customer: Customer
-                        @Field(key: "id")
-                        var id: Int?
+                        @Parent(key: "customer_id") var customer: Customer
+                        @Field(key: "id") var id: Int?
                         func hash(into hasher: inout Hasher) {
                             hasher.combine(try! self.customer.requireID())
                             hasher.combine(self.id)
@@ -104,6 +118,24 @@ final class WithCompositeIDTests: XCTestCase {
                     @CompositeID()
                     var id: IDValue?
                     var prop: String
+                    var flat: MyEntity {
+                        let flat = MyEntity()
+                        if let id = self.id {
+                            flat.customer = id.customer
+                            flat.id = id.id
+                        }
+                        flat.prop = self.prop
+                        return flat
+                    }
+                }
+
+                var composite: Composite {
+                    let composite = Composite()
+                    composite.id = Composite.IDValue()
+                    composite.id!.customer = self.customer
+                    composite.id!.id = self.id
+                    composite.prop = self.prop
+                    return composite
                 }
             }
             """,
