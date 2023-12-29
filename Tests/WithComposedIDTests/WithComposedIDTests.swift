@@ -78,7 +78,7 @@ final class WithCompositeIDTests: XCTestCase {
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
     }
-    func testNames() throws {
+    func testProps() throws {
         #if canImport(WithCompositeIDMacros)
         assertMacroExpansion(
             """
@@ -91,6 +91,17 @@ final class WithCompositeIDTests: XCTestCase {
                 var id: Int?
             
                 var prop: String
+            
+                var prop2: Int {
+                    didSet {
+                    }
+                }
+
+                var calc1: Int { 1 }
+                var calc2: Int { get { 2 } }
+                var calc3: Int { get throws { 3 } }
+                var calc3: Int { get { 3 } set { _ = newValue }}
+                var calc4: String { _read { self.prop } }
             }
             """,
             expandedSource: """
@@ -102,6 +113,17 @@ final class WithCompositeIDTests: XCTestCase {
                 var id: Int?
             
                 var prop: String
+            
+                var prop2: Int {
+                    didSet {
+                    }
+                }
+
+                var calc1: Int { 1 }
+                var calc2: Int { get { 2 } }
+                var calc3: Int { get throws { 3 } }
+                var calc3: Int { get { 3 } set { _ = newValue }}
+                var calc4: String { _read { self.prop } }
 
                 final class Composite: Model {
                     final class IDValue: Fields , Hashable {
@@ -118,6 +140,36 @@ final class WithCompositeIDTests: XCTestCase {
                     @CompositeID()
                     var id: IDValue?
                     var prop: String
+                    var prop2: Int {
+                            didSet {
+                            }
+                        }
+                    var calc1: Int {
+                        1
+                    }
+                    var calc2: Int {
+                        get {
+                            2
+                        }
+                    }
+                    var calc3: Int {
+                        get throws {
+                            3
+                        }
+                    }
+                    var calc3: Int {
+                        get {
+                            3
+                        }
+                        set {
+                            _ = newValue
+                        }
+                    }
+                    var calc4: String {
+                        _read {
+                            self.prop
+                        }
+                    }
                     var flat: MyEntity {
                         let flat = MyEntity()
                         if let id = self.id {
@@ -125,6 +177,7 @@ final class WithCompositeIDTests: XCTestCase {
                             flat.id = id.id
                         }
                         flat.prop = self.prop
+                        flat.prop2 = self.prop2
                         return flat
                     }
                 }
@@ -135,6 +188,7 @@ final class WithCompositeIDTests: XCTestCase {
                     composite.id!.customer = self.customer
                     composite.id!.id = self.id
                     composite.prop = self.prop
+                    composite.prop2 = self.prop2
                     return composite
                 }
             }

@@ -146,11 +146,35 @@ public struct WithCompositeIDMacro: MemberMacro {
         var allProperties: [String: FluentAttributeInfo] = [:]
         var compositeMembers: [CompositeProperty] = []
         var remainingMembers: [MemberBlockItemSyntax] = []
+        
+        func containsDisallowedAccessor(binding: PatternBindingSyntax) -> Bool {
+            let disallowedAccessors: Set = ["get", "set", "_read", "_modify"]
+
+            guard let accessors = binding.accessorBlock?.accessors.as(AccessorDeclListSyntax.self) else {
+                return binding.accessorBlock?.accessors.is(CodeBlockItemListSyntax.self) == true
+            }
+            
+            for accessor in accessors {
+                if disallowedAccessors.contains(accessor.accessorSpecifier.trimmedDescription) {
+                    return true
+                }
+            }
+            return false
+        }
+        
         var remainingVariables: [VariableDeclSyntax] {
             remainingMembers.compactMap {
                 $0.decl.as(VariableDeclSyntax.self)
+            }.compactMap {
+                var variable = $0
+                variable.bindings = variable.bindings.filter {
+                    $0.pattern.trimmedDescription != "schema" &&
+                    !containsDisallowedAccessor(binding: $0)
+                }
+                return variable.bindings.isEmpty ? nil : variable
             }.filter {
-                !$0.modifiers.contains(.init(name: "static")) && $0.bindings.first?.pattern.trimmedDescription != "schema"
+                !$0.modifiers.contains(.init(name: "static")) &&
+                $0.bindingSpecifier.trimmedDescription == "var"
             }
         }
         
