@@ -39,7 +39,16 @@ final class WithCompositeIDTests: XCTestCase {
                 final class Composite: Model {
                     final class IDValue: Fields , Hashable {
                         @Parent(key: "customer_id") var customer: Customer
-                        @Field(key: "id") var id: Int?
+                        @Field(key: "id") var id: Int
+                        required init() {
+                        }
+                        convenience init(customer: Customer.IDValue , id: Int?) {
+                            self.init()
+                            self.customer.id = customer
+                            if let value = id {
+                                self.id = value
+                            }
+                        }
                         func hash(into hasher: inout Hasher) {
                             hasher.combine(try! self.customer.requireID())
                             hasher.combine(self.id)
@@ -62,11 +71,18 @@ final class WithCompositeIDTests: XCTestCase {
                     }
                 }
 
+                var compositeID: Composite.IDValue {
+                    let id = Composite.IDValue()
+                    id.customer = self.customer
+                    if let value = self.id {
+                        id.id = value
+                    }
+                    return id
+                }
+
                 var composite: Composite {
                     let composite = Composite()
-                    composite.id = Composite.IDValue()
-                    composite.id!.customer = self.customer
-                    composite.id!.id = self.id
+                    composite.id = self.compositeID
                     composite.prop = self.prop
                     return composite
                 }
@@ -128,7 +144,16 @@ final class WithCompositeIDTests: XCTestCase {
                 final class Composite: Model {
                     final class IDValue: Fields , Hashable {
                         @Parent(key: "customer_id") var customer: Customer
-                        @Field(key: "id") var id: Int?
+                        @Field(key: "id") var id: Int
+                        required init() {
+                        }
+                        convenience init(customer: Customer.IDValue , id: Int?) {
+                            self.init()
+                            self.customer.id = customer
+                            if let value = id {
+                                self.id = value
+                            }
+                        }
                         func hash(into hasher: inout Hasher) {
                             hasher.combine(try! self.customer.requireID())
                             hasher.combine(self.id)
@@ -182,15 +207,82 @@ final class WithCompositeIDTests: XCTestCase {
                     }
                 }
 
+                var compositeID: Composite.IDValue {
+                    let id = Composite.IDValue()
+                    id.customer = self.customer
+                    if let value = self.id {
+                        id.id = value
+                    }
+                    return id
+                }
+
                 var composite: Composite {
                     let composite = Composite()
-                    composite.id = Composite.IDValue()
-                    composite.id!.customer = self.customer
-                    composite.id!.id = self.id
+                    composite.id = self.compositeID
                     composite.prop = self.prop
                     composite.prop2 = self.prop2
                     return composite
                 }
+            }
+            """,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+    func testNoID() throws {
+        #if canImport(WithCompositeIDMacros)
+        assertMacroExpansion(
+            """
+            @WithCompositeID
+            final class MyEntity: Model {
+                @WrapCompositeID
+                @Parent(key: "customer_id")
+                var customer: Customer
+
+                @WrapCompositeID
+                @Parent(key: "instance_id")
+                var instance: Instance
+
+                var prop: String
+            }
+            """,
+            expandedSource: """
+            final class MyEntity: Model {
+                @WrapCompositeID
+                @Parent(key: "customer_id")
+                var customer: Customer
+
+                @WrapCompositeID
+                @Parent(key: "instance_id")
+                var instance: Instance
+            
+                var prop: String
+
+                final class IDValue: Fields , Hashable {
+                    @Parent(key: "customer_id") var customer: Customer
+                    @Parent(key: "instance_id") var instance: Instance
+                    required init() {
+                    }
+                    convenience init(customer: Customer.IDValue , instance: Instance.IDValue) {
+                        self.init()
+                        self.customer.id = customer
+                        self.instance.id = instance
+                    }
+                    func hash(into hasher: inout Hasher) {
+                        hasher.combine(try! self.customer.requireID())
+                        hasher.combine(try! self.instance.requireID())
+                    }
+                    static func ==(lhs: IDValue, rhs: IDValue) -> Bool {
+                        (try! lhs.customer.requireID(), try! lhs.instance.requireID()) == (try! rhs.customer.requireID(), try! rhs.instance.requireID())
+                    }
+                }
+
+                typealias WrapCompositeID<T> = WrapCompositeIDProperty<MyEntity, T>
+
+                @CompositeID()
+                var id: IDValue?
             }
             """,
             macros: testMacros

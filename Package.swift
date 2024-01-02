@@ -14,17 +14,21 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
+        .package(url: "https://github.com/vapor/fluent.git", from: "4.8.0"),
     ],
     targets: [
         .macro(
             name: "WithCompositeIDMacros",
             dependencies: [
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
-                .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
             ]
         ),
 
-        .target(name: "WithCompositeID", dependencies: ["WithCompositeIDMacros"]),
+        .target(name: "WithCompositeID", dependencies: [
+            "WithCompositeIDMacros",
+            .product(name: "Fluent", package: "fluent"),
+        ]),
 
         .testTarget(
             name: "WithCompositeIDTests",
