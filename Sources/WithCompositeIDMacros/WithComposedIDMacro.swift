@@ -166,7 +166,7 @@ extension WithCompositeIDMacro: MemberMacro {
         
         func scalarValue(ofProperty property: String, withPrefix prefix: String = "") -> String {
             if allProperties[property]!.isModel {
-                "try! \(prefix)\(property).requireID()"
+                "\(prefix)$\(property).id"
             } else {
                 "\(prefix)\(property)"
             }
@@ -216,7 +216,7 @@ extension WithCompositeIDMacro: MemberMacro {
                 body: .init(statements: .init(["""
                     self.init()
                 """] + compositeMembers.map { $0.fluentAttribute.info.isModel ? """
-                self.\(raw: $0.name).id = \(raw: $0.name)
+                self.$\(raw: $0.name).id = \(raw: $0.name)
                 """ : $0.isOptional ? """
                 if let value = \(raw: $0.name) {
                     self.\(raw: $0.name) = value

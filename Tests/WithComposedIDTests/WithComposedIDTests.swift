@@ -44,17 +44,17 @@ final class WithCompositeIDTests: XCTestCase {
                         }
                         convenience init(customer: Customer.IDValue , id: Int?) {
                             self.init()
-                            self.customer.id = customer
+                            self.$customer.id = customer
                             if let value = id {
                                 self.id = value
                             }
                         }
                         func hash(into hasher: inout Hasher) {
-                            hasher.combine(try! self.customer.requireID())
+                            hasher.combine(self.$customer.id)
                             hasher.combine(self.id)
                         }
                         static func ==(lhs: IDValue, rhs: IDValue) -> Bool {
-                            (try! lhs.customer.requireID(), lhs.id) == (try! rhs.customer.requireID(), rhs.id)
+                            (lhs.$customer.id, lhs.id) == (rhs.$customer.id, rhs.id)
                         }
                     }
                     @CompositeID()
@@ -149,17 +149,17 @@ final class WithCompositeIDTests: XCTestCase {
                         }
                         convenience init(customer: Customer.IDValue , id: Int?) {
                             self.init()
-                            self.customer.id = customer
+                            self.$customer.id = customer
                             if let value = id {
                                 self.id = value
                             }
                         }
                         func hash(into hasher: inout Hasher) {
-                            hasher.combine(try! self.customer.requireID())
+                            hasher.combine(self.$customer.id)
                             hasher.combine(self.id)
                         }
                         static func ==(lhs: IDValue, rhs: IDValue) -> Bool {
-                            (try! lhs.customer.requireID(), lhs.id) == (try! rhs.customer.requireID(), rhs.id)
+                            (lhs.$customer.id, lhs.id) == (rhs.$customer.id, rhs.id)
                         }
                     }
                     @CompositeID()
@@ -267,15 +267,15 @@ final class WithCompositeIDTests: XCTestCase {
                     }
                     convenience init(customer: Customer.IDValue , instance: Instance.IDValue) {
                         self.init()
-                        self.customer.id = customer
-                        self.instance.id = instance
+                        self.$customer.id = customer
+                        self.$instance.id = instance
                     }
                     func hash(into hasher: inout Hasher) {
-                        hasher.combine(try! self.customer.requireID())
-                        hasher.combine(try! self.instance.requireID())
+                        hasher.combine(self.$customer.id)
+                        hasher.combine(self.$instance.id)
                     }
                     static func ==(lhs: IDValue, rhs: IDValue) -> Bool {
-                        (try! lhs.customer.requireID(), try! lhs.instance.requireID()) == (try! rhs.customer.requireID(), try! rhs.instance.requireID())
+                        (lhs.$customer.id, lhs.$instance.id) == (rhs.$customer.id, rhs.$instance.id)
                     }
                 }
 
