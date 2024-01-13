@@ -37,7 +37,7 @@ final class WithCompositeIDTests: XCTestCase {
                 var prop: String
 
                 final class Composite: Model {
-                    final class IDValue: Fields , Hashable {
+                    final class IDValue: Fields , Equatable , Hashable {
                         @Parent(key: "customer_id") var customer: Customer
                         @Field(key: "id") var id: Int
                         required init() {
@@ -142,7 +142,7 @@ final class WithCompositeIDTests: XCTestCase {
                 var calc4: String { _read { self.prop } }
 
                 final class Composite: Model {
-                    final class IDValue: Fields , Hashable {
+                    final class IDValue: Fields , Equatable , Hashable {
                         @Parent(key: "customer_id") var customer: Customer
                         @Field(key: "id") var id: Int
                         required init() {
@@ -260,7 +260,7 @@ final class WithCompositeIDTests: XCTestCase {
             
                 var prop: String
 
-                final class IDValue: Fields , Hashable {
+                final class IDValue: Fields , Equatable , Hashable {
                     @Parent(key: "customer_id") var customer: Customer
                     @Parent(key: "instance_id") var instance: Instance
                     required init() {

@@ -178,6 +178,7 @@ extension WithCompositeIDMacro: MemberMacro {
             name: "IDValue",
             inheritanceClause: .init(inheritedTypes: .init([
                 .init(type: TypeSyntax(stringLiteral: "Fields"), trailingComma: ","),
+                .init(type: TypeSyntax(stringLiteral: "Equatable"), trailingComma: ","),
                 .init(type: TypeSyntax(stringLiteral: "Hashable")),
             ])),
             memberBlock: .init(members: .init(compositeMembers.map {
