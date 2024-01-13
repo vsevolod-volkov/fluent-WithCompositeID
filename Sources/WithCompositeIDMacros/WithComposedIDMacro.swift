@@ -81,16 +81,19 @@ extension WithCompositeIDMacro: MemberMacro {
         }
         
         let hasID = hasID(declaration: declaration)
+        let className: String
         
         switch mode {
         case .nestedComposite:
             guard hasID else {
                 fatalError("@WithCompositeID(using:...) requires @ID() property.")
             }
+            className = "\(declaration.name.trimmedDescription).Composite"
         case .wrapCompositeID:
             guard !hasID else {
                 fatalError("@WithCompositeID requires no @ID() property to be present.")
             }
+            className = declaration.name.trimmedDescription
         }
         
         var member = inner.memberBlock.members.makeIterator()
@@ -214,7 +217,7 @@ extension WithCompositeIDMacro: MemberMacro {
                         return item.element
                     }
                 }.reversed()))),
-                body: .init(statements: .init(["""
+                body: .init(statements: ["""
                     self.init()
                 """] + compositeMembers.map { $0.fluentAttribute.info.isModel ? """
                 self.$\(raw: $0.name).id = \(raw: $0.name)
@@ -224,7 +227,7 @@ extension WithCompositeIDMacro: MemberMacro {
                 }
                 """ : """
                 self.\(raw: $0.name) = \(raw: $0.name)
-                """}))
+                """})
             )), .init(decl: FunctionDeclSyntax(
                 funcKeyword: "func",
                 name: "hash",
@@ -240,9 +243,9 @@ extension WithCompositeIDMacro: MemberMacro {
             )), .init(decl: FunctionDeclSyntax(
                 modifiers: [.init(name: "static")],
                 funcKeyword: "func",
-                name: "==",
+                name: "== ",
                 signature: .init(parameterClause: .init(
-                    parameters: ["lhs: IDValue,", "rhs: IDValue"]),
+                    parameters: ["lhs: \(raw: className).IDValue,", "rhs: \(raw: className).IDValue"]),
                     returnClause: .init(type: TypeSyntax(stringLiteral: "Bool"))
                 ),
                 body: .init(statements: [CodeBlockItemSyntax(item: .expr("""

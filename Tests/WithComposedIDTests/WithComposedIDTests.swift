@@ -53,7 +53,7 @@ final class WithCompositeIDTests: XCTestCase {
                             hasher.combine(self.$customer.id)
                             hasher.combine(self.id)
                         }
-                        static func ==(lhs: IDValue, rhs: IDValue) -> Bool {
+                        static func == (lhs: MyEntity.Composite.IDValue, rhs: MyEntity.Composite.IDValue) -> Bool {
                             (lhs.$customer.id, lhs.id) == (rhs.$customer.id, rhs.id)
                         }
                     }
@@ -158,7 +158,7 @@ final class WithCompositeIDTests: XCTestCase {
                             hasher.combine(self.$customer.id)
                             hasher.combine(self.id)
                         }
-                        static func ==(lhs: IDValue, rhs: IDValue) -> Bool {
+                        static func == (lhs: MyEntity.Composite.IDValue, rhs: MyEntity.Composite.IDValue) -> Bool {
                             (lhs.$customer.id, lhs.id) == (rhs.$customer.id, rhs.id)
                         }
                     }
@@ -274,7 +274,7 @@ final class WithCompositeIDTests: XCTestCase {
                         hasher.combine(self.$customer.id)
                         hasher.combine(self.$instance.id)
                     }
-                    static func ==(lhs: IDValue, rhs: IDValue) -> Bool {
+                    static func == (lhs: MyEntity.IDValue, rhs: MyEntity.IDValue) -> Bool {
                         (lhs.$customer.id, lhs.$instance.id) == (rhs.$customer.id, rhs.$instance.id)
                     }
                 }
