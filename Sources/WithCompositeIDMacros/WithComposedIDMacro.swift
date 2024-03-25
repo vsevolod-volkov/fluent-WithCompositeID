@@ -175,8 +175,10 @@ extension WithCompositeIDMacro: MemberMacro {
             }
         }
         
+        let classAccessModifiers = declaration.modifiers.access
+        
         let idValue = ClassDeclSyntax(
-            modifiers: [.init(name: "final")],
+            modifiers: classAccessModifiers + [.init(name: "final")],
             classKeyword: "class",
             name: "IDValue",
             inheritanceClause: .init(inheritedTypes: .init([
@@ -194,12 +196,12 @@ extension WithCompositeIDMacro: MemberMacro {
                 return MemberBlockItemSyntax(decl: variable)
             } + [.init(decl: InitializerDeclSyntax(
                 attributes: [],
-                modifiers: [.init(name: "required")],
+                modifiers: classAccessModifiers + [.init(name: "required")],
                 signature: .init(parameterClause: .init(parameters: [])),
                 body: .init(statements: [])
             )), .init(decl: InitializerDeclSyntax(
                 attributes: [],
-                modifiers: [.init(name: "convenience")],
+                modifiers: classAccessModifiers + [.init(name: "convenience")],
                 signature: .init(parameterClause: .init(parameters: .init(compositeMembers.compactMap {
                     guard let type = $0.variable.bindings.first?.typeAnnotation?.type.trimmedDescription else {
                         return nil
@@ -229,6 +231,7 @@ extension WithCompositeIDMacro: MemberMacro {
                 self.\(raw: $0.name) = \(raw: $0.name)
                 """})
             )), .init(decl: FunctionDeclSyntax(
+                modifiers: classAccessModifiers,
                 funcKeyword: "func",
                 name: "hash",
                 signature: .init(parameterClause: .init(parameters: ["into hasher: inout Hasher"])),
@@ -241,7 +244,7 @@ extension WithCompositeIDMacro: MemberMacro {
                 }.joined()
                 ))
             )), .init(decl: FunctionDeclSyntax(
-                modifiers: [.init(name: "static")],
+                modifiers: classAccessModifiers + [.init(name: "static")],
                 funcKeyword: "func",
                 name: "== ",
                 signature: .init(parameterClause: .init(
@@ -272,7 +275,7 @@ extension WithCompositeIDMacro: MemberMacro {
             inner.memberBlock.members = .init([.init(decl: idValue)])
             inner.memberBlock.members.append(.init(decl: try VariableDeclSyntax("""
                 @CompositeID()
-                var id: IDValue?
+                \(classAccessModifiers)var id: IDValue?
                 """
             )))
             inner.memberBlock.members.append(contentsOf: remainingMembers.map {
@@ -331,10 +334,10 @@ extension WithCompositeIDMacro: MemberMacro {
         case .wrapCompositeID:
             return [
                 idValue.as(DeclSyntax.self)!,
-                "typealias WrapCompositeID<T> = WrapCompositeIDProperty<\(declaration.name), T>",
+                "\(classAccessModifiers)typealias WrapCompositeID<T> = WrapCompositeIDProperty<\(declaration.name), T>",
                 """
                 @CompositeID()
-                var id: IDValue?
+                \(classAccessModifiers)var id: IDValue?
                 """,
             ]
         }
@@ -490,6 +493,16 @@ extension WithCompositeIDMacro {
                 .filter { attributes.contains($0.key) }
                 .reduce(false) { $0 || $1.value.isID }
         }
+    }
+}
+
+fileprivate extension DeclModifierListSyntax {
+    var access: DeclModifierListSyntax {
+        self.filter {[
+            "public",
+            "internal",
+            "fileprivate",
+        ].contains($0.trimmedDescription)}
     }
 }
 
